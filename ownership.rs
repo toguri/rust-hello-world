@@ -15,5 +15,5 @@ fn main() {
             println!("w:{}:", w);
         }
         println!("z:{}:", z);
-    }    
+    }
 }
