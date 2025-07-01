@@ -1,0 +1,96 @@
+name: 🚀 Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'release-*'
+      - 'ferris-*'
+      - 'cargo-ship-*'
+      - 'oxidize-*'
+
+jobs:
+  build-release:
+    name: 🦀 Build Release Binaries
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Build input-test
+      run: |
+        cd input-test
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Build lambda-s3event
+      if: matrix.os == 'ubuntu-latest'  # Lambda only needs Linux builds
+      run: |
+        cd lambda-s3event
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Compile examples
+      run: |
+        rustc hello.rs -o hello-${{ matrix.target }}
+        rustc ownership.rs -o ownership-${{ matrix.target }}
+        # reassignment.rsは意図的にコンパイルエラーを含む学習用ファイル
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: binaries-${{ matrix.target }}
+        path: |
+          input-test/target/${{ matrix.target }}/release/input-test*
+          lambda-s3event/target/${{ matrix.target }}/release/lambda-s3event*
+          hello-${{ matrix.target }}*
+          ownership-${{ matrix.target }}*
+
+  create-release:
+    name: 📦 Create GitHub Release
+    needs: build-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+    
+    - name: Create Release Notes
+      run: |
+        echo "# 🦀 Rust Learning Journey Release" > release-notes.md
+        echo "" >> release-notes.md
+        echo "## What's New" >> release-notes.md
+        echo "- More Rust adventures and learnings!" >> release-notes.md
+        echo "- Compiled binaries for multiple platforms" >> release-notes.md
+        echo "" >> release-notes.md
+        echo "## Included Binaries" >> release-notes.md
+        echo "- \`input-test\`: Interactive input handling example" >> release-notes.md
+        echo "- \`lambda-s3event\`: AWS Lambda S3 event handler" >> release-notes.md
+        echo "- \`hello\`: Classic Hello World" >> release-notes.md
+        echo "- \`ownership\`: Rust ownership demonstration" >> release-notes.md
+        echo "" >> release-notes.md
+        echo "## 🎉 Happy Rusting!" >> release-notes.md
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release-notes.md
+        files: |
+          artifacts/**/*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
