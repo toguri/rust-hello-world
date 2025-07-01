@@ -1,22 +1,77 @@
-name: Rust
+name: Rust CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: 
+      - '**'
+    tags:
+      - 'release-*'
+      - 'ferris-*'        # Rustのマスコット🦀にちなんで
+      - 'cargo-ship-*'    # Cargoで出荷！
+      - 'oxidize-*'       # 錆びる = Rustする
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  check:
+    name: 🦀 Cargo Check
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - uses: dtolnay/rust-toolchain@stable
+    - name: Check input-test
+      run: cd input-test && cargo check
+    - name: Check lambda-s3event
+      run: cd lambda-s3event && cargo check
+
+  test:
+    name: 🧪 Test Suite
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+    - name: Test input-test
+      run: cd input-test && cargo test
+    - name: Test lambda-s3event
+      run: cd lambda-s3event && cargo test
+
+  fmt:
+    name: 🎨 Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt
+    - name: Format check input-test
+      run: cd input-test && cargo fmt --all -- --check
+    - name: Format check lambda-s3event
+      run: cd lambda-s3event && cargo fmt --all -- --check
+
+  clippy:
+    name: 📎 Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+    - name: Clippy input-test
+      run: cd input-test && cargo clippy -- -D warnings
+    - name: Clippy lambda-s3event
+      run: cd lambda-s3event && cargo clippy -- -D warnings
+
+  compile-examples:
+    name: 🔧 Compile Examples
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+    - name: Compile standalone files
+      run: |
+        rustc hello.rs -o hello
+        rustc ownership.rs -o ownership
+        rustc reassignment.rs -o reassignment
