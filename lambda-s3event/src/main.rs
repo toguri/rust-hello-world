@@ -8,7 +8,7 @@ use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 /// - https://github.com/aws-samples/serverless-rust-demo/
 async fn function_handler(event: LambdaEvent<S3Event>) -> Result<(), Error> {
     // Extract some useful information from the request
-    let (event, _) = event.info_parts();
+    let (event, _) = event.into_parts();
     for record in event.records {
         if let Some(key) = record.s3.object.key {
             println!("object key : {}", key);
