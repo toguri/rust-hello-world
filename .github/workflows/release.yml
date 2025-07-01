@@ -44,7 +44,7 @@ jobs:
       run: |
         rustc hello.rs -o hello-${{ matrix.target }}
         rustc ownership.rs -o ownership-${{ matrix.target }}
-        rustc reassignment.rs -o reassignment-${{ matrix.target }}
+        # reassignment.rsは意図的にコンパイルエラーを含む学習用ファイル
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -55,7 +55,6 @@ jobs:
           lambda-s3event/target/${{ matrix.target }}/release/lambda-s3event*
           hello-${{ matrix.target }}*
           ownership-${{ matrix.target }}*
-          reassignment-${{ matrix.target }}*
 
   create-release:
     name: 📦 Create GitHub Release
@@ -83,7 +82,6 @@ jobs:
         echo "- \`lambda-s3event\`: AWS Lambda S3 event handler" >> release-notes.md
         echo "- \`hello\`: Classic Hello World" >> release-notes.md
         echo "- \`ownership\`: Rust ownership demonstration" >> release-notes.md
-        echo "- \`reassignment\`: Variable reassignment examples" >> release-notes.md
         echo "" >> release-notes.md
         echo "## 🎉 Happy Rusting!" >> release-notes.md
     

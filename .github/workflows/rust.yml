@@ -74,4 +74,4 @@ jobs:
       run: |
         rustc hello.rs -o hello
         rustc ownership.rs -o ownership
-        rustc reassignment.rs -o reassignment
+        # reassignment.rsは意図的にコンパイルエラーを含む学習用ファイル

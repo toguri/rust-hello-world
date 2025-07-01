@@ -11,7 +11,7 @@ async fn function_handler(event: LambdaEvent<S3Event>) -> Result<(), Error> {
     let (event, _) = event.into_parts();
     for record in event.records {
         if let Some(key) = record.s3.object.key {
-            println!("object key : {}", key);
+            println!("object key : {key}");
         }
     }
     Ok(())
